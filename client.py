@@ -1,8 +1,17 @@
 import websocket
 import time
+import ASUS.GPIO as GPIO
+
+GPIO.setmode(GPIO.BOARD)
+GPIO.setup(11, GPIO.OUT)
+GPIO.setup(10, GPIO.OUT)
+GPIO.output(10, True)
 
 def on_message(ws, message):
-    print message
+    if message == "on":
+        GPIO.output(11, True)
+    elif message == "off":
+        GPIO.output(11, False)
 
 def on_error(ws, error):
     print error

@@ -1,18 +1,32 @@
 var WebSocketServer = require('websocket').server;
 var http = require('http');
 var express = require('express');
+var bodyParser = require('body-parser');
 
 var app = express();
 var router = express.Router();
 
-router.post('/', (req, res, next) => {
-	theConnection.sendUTF(req.query.status);
-	res.send('success');
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
+
+router.post('/:id', (req, res, next) => {
+    for (var i = list.length - 1; i >= 0; i--) {
+        if (list[i] === req.params.id) {
+            connections[i].sendUTF(req.query.status);
+            res.send('success');
+            return;
+        }
+    }
+    res.status(400).send('fail');
+})
+
+router.get('/list', (req, res, next) => {
+    res.json(list);
 })
 
 app.use('/', router);
 app.listen(3000, () => {
-	console.log((new Date()) + ' Request server is listening on port 3000');
+    console.log((new Date()) + ' Request server is listening on port 3000');
 });
 
 var server = http.createServer((request, response) => {
@@ -26,26 +40,26 @@ server.listen(3001, () => {
 });
 
 var websocket = new WebSocketServer({
-	httpServer: server
+    httpServer: server
 })
 
-let theConnection;
+var list = [];
+var connections = [];
 
 websocket.on('request', (request) => {
-	theConnection = request.accept('echo-protocol', request.origin);
-    console.log((new Date()) + ' Connection accepted.');
-    // theConnection.on('message', (message) => {
-    //     if (message.type === 'utf8') {
-    //         console.log('Received Message: ' + message.utf8Data);
-    //         theConnection.sendUTF(message.utf8Data);
-    //     }
-    //     else if (message.type === 'binary') {
-    //         console.log('Received Binary Message of ' + message.binaryData.length + ' bytes');
-    //         theConnection.sendBytes(message.binaryData);
-    //     }
-    // });
-    theConnection.on('close', (reasonCode, description) => {
-        console.log((new Date()) + ' Peer ' + theConnection.remoteAddress + ' disconnected.');
-		theConnection = null;
+    let connection = request.accept('echo-protocol', request.origin);
+    console.log((new Date()) + ' Connection ' + connection.remoteAddress + ' accepted.');
+    connection.on('message', (message) => {
+        list.push(message.utf8Data);
+        connections.push(connection);
+    });
+    connection.on('close', (reasonCode, description) => {
+        console.log((new Date()) + ' Peer ' + connection.remoteAddress + ' disconnected.');
+        for (var i = connections.length - 1; i >= 0; i--) {
+            if (connections[i] === connection) {
+                connections.splice(i, 1);
+                list.splice(i, 1);
+            }
+        }
     });
 })

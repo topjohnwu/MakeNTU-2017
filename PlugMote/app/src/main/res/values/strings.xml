@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">PlugMote</string>
+    <string name="no_devices_found">No Devices Found!</string>
+    <string name="unknown_device">Unknown Device %1$d</string>
+    <string name="edit_name">Edit Name</string>
+    <string name="done">Done</string>
+    <string name="cancel">Cancel</string>
 </resources>

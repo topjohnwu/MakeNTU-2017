@@ -5,4 +5,8 @@
     <string name="edit_name">Edit Name</string>
     <string name="done">Done</string>
     <string name="cancel">Cancel</string>
+    <string name="more_info">More Info</string>
+    <string name="temperature">Temperature</string>
+    <string name="power_status">Power Status</string>
+    <string name="mac_address">MAC Address</string>
 </resources>

@@ -119,6 +119,8 @@ public class WebService {
             e.printStackTrace();
         }
 
+        Log.d(TAG, response.toString());
+
         return response.toString();
     }
 

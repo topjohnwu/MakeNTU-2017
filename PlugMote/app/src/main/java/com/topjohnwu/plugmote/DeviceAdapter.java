@@ -23,6 +23,9 @@ import android.widget.TextView;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -35,10 +38,12 @@ public class DeviceAdapter extends RecyclerView.Adapter<DeviceAdapter.ViewHolder
     private List<String> mDevices;
     private SharedPreferences prefs;
     private Map<String, String> nameMap;
+    private Map<String, Details> detailsMap;
     private Gson gson;
 
-    public DeviceAdapter(List<String> devices) {
+    public DeviceAdapter(List<String> devices, Map<String, Details> details) {
         mDevices = devices;
+        detailsMap = details;
     }
 
     @Override
@@ -58,6 +63,7 @@ public class DeviceAdapter extends RecyclerView.Adapter<DeviceAdapter.ViewHolder
     @Override
     public void onBindViewHolder(final ViewHolder holder, int position) {
         final String mac = mDevices.get(position);
+        Details details = detailsMap.get(mac);
         String name = nameMap.get(mac);
         if (name == null) {
             for (int i = 1; ; ++i) {
@@ -102,6 +108,46 @@ public class DeviceAdapter extends RecyclerView.Adapter<DeviceAdapter.ViewHolder
                 alert.show();
             }
         });
+        holder.moreInfo.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(final View v) {
+                new AsyncTask<Void, Void, Boolean>() {
+                    private Details details;
+                    @Override
+                    protected Boolean doInBackground(Void... params) {
+                        try {
+                            details = WebUtils.getDetails(mac);
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                            return false;
+                        }
+                        return true;
+                    }
+
+                    @Override
+                    protected void onPostExecute(Boolean result) {
+                        if (!result) {
+                            return;
+                        }
+                        AlertDialog.Builder alert = new AlertDialog.Builder(v.getContext());
+                        View view = LayoutInflater.from(v.getContext()).inflate(R.layout.details_dialog, null);
+                        TextView macAddr = (TextView) view.findViewById(R.id.mac);
+                        TextView temperature = (TextView) view.findViewById(R.id.temperature);
+                        TextView status = (TextView) view.findViewById(R.id.status);
+                        macAddr.setText(mac);
+                        temperature.setText(details.temp + " °C");
+                        status.setText(details.status);
+                        alert.setView(view);
+                        alert.setTitle(R.string.more_info);
+                        alert.setPositiveButton(R.string.done, null);
+                        alert.show();
+                    }
+                }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+
+            }
+        });
+        holder.masterSwitch.setOnCheckedChangeListener(null);
+        holder.masterSwitch.setChecked(details.status.equals("ON"));
         holder.masterSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, final boolean isChecked) {
@@ -130,6 +176,7 @@ public class DeviceAdapter extends RecyclerView.Adapter<DeviceAdapter.ViewHolder
         TextView deviceName;
         TextView macAddr;
         ImageView editButton;
+        ImageView moreInfo;
         Switch masterSwitch;
 
         private ValueAnimator mAnimator;
@@ -143,6 +190,7 @@ public class DeviceAdapter extends RecyclerView.Adapter<DeviceAdapter.ViewHolder
             deviceName = (TextView) itemView.findViewById(R.id.device_name);
             macAddr = (TextView) itemView.findViewById(R.id.mac_addr);
             editButton = (ImageView) itemView.findViewById(R.id.edit);
+            moreInfo = (ImageView) itemView.findViewById(R.id.more_info);
             masterSwitch = (Switch) itemView.findViewById(R.id.master_switch);
 
             expandLayout.getViewTreeObserver().addOnPreDrawListener(

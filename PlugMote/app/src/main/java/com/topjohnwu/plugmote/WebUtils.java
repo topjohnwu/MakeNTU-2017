@@ -28,4 +28,8 @@ public class WebUtils {
         WebService.request(REQ_URL + mac + "?status=" + (on ? "on" : "off"), WebService.POST);
     }
 
+    public static Details getDetails(String mac) throws JSONException {
+        return new Details(WebService.request(REQ_URL + "details/" + mac, WebService.GET));
+    }
+
 }

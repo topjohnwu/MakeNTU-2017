@@ -1,6 +1,8 @@
 import websocket
 import time
 import uuid
+import os
+from threading import Thread
 import ASUS.GPIO as GPIO
 
 GPIO.setmode(GPIO.BOARD)
@@ -10,6 +12,14 @@ GPIO.output(10, True)
 GPIO.output(11, False)
 
 status = "off"
+
+def temp_monitor():
+    while True:
+        print get_temp()
+        if float(get_temp()) > 60:
+            print "Overheat!!"
+            os._exit(1)
+        time.sleep(5)
 
 def get_mac():
     mac_num = hex(uuid.getnode()).replace('0x', '').upper()
@@ -56,6 +66,8 @@ def new_socket():
                               on_close = on_close)
 
     return ws
+
+Thread(target = temp_monitor).start()
 
 websocket.enableTrace(True)
 

@@ -22,6 +22,7 @@ def get_temp():
     return str((float(temp) / 1000))
 
 def toggle(stat):
+    global status
     status = stat
     if status == "on":
         GPIO.output(11, True)
@@ -30,7 +31,6 @@ def toggle(stat):
 
 def on_message(ws, message):
     req = message.split(':')
-    print req
     if req[0] == 'set':
         toggle(req[1])
     elif req[0] == 'detail':
